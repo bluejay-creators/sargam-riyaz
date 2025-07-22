@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hindustani Note Detector</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        h1 {
+            margin-bottom: 2rem;
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sargam-display {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+
+        .note {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .note.active {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            color: #333;
+            transform: scale(1.2);
+            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .current-note {
+            font-size: 3rem;
+            margin: 2rem 0;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .controls {
+            margin-top: 2rem;
+        }
+
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .frequency-display {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .status {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Sargam Practice</h1>
+        
+        <div class="sargam-display">
+            <div class="note" data-note="S">S</div>
+            <div class="note" data-note="r">r</div>
+            <div class="note" data-note="g">g</div>
+            <div class="note" data-note="m">m</div>
+            <div class="note" data-note="p">p</div>
+            <div class="note" data-note="d">d</div>
+            <div class="note" data-note="n">n</div>
+            <div class="note" data-note="S'">S'</div>
+        </div>
+
+        <div class="current-note" id="currentNote">Start singing!</div>
+        
+        <div class="frequency-display" id="frequencyDisplay">
+            Frequency: -- Hz
+        </div>
+
+        <div class="controls">
+            <button id="startBtn" onclick="startDetection()">Start Detection</button>
+            <button id="stopBtn" onclick="stopDetection()" disabled>Stop Detection</button>
+        </div>
+
+        <div class="status" id="status">
+            Click "Start Detection" to begin practicing
+        </div>
+    </div>
+
+    <script>
+        let audioContext;
+        let analyser;
+        let microphone;
+        let dataArray;
+        let isListening = false;
+
+        // Reference frequency for Sa (C4 = 261.63 Hz, but adjustable)
+        const baseFrequency = 261.63;
+        
+        // Frequency ratios for Hindustani notes (just intonation)
+        const noteRatios = {
+            'S': 1.0,      // Sa
+            'r': 16/15,    // Komal Re (minor second)
+            'g': 5/4,      // Ga (major third)
+            'm': 4/3,      // Ma (perfect fourth)
+            'p': 3/2,      // Pa (perfect fifth)
+            'd': 8/5,      // Dha (minor sixth)
+            'n': 15/8,     // Ni (major seventh)
+            "S'": 2.0      // High Sa (octave)
+        };
+
+        const noteNames = Object.keys(noteRatios);
+
+        async function startDetection() {
+            try {
+                // Check if browser supports getUserMedia
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('Browser does not support microphone access');
+                }
+
+                document.getElementById('status').textContent = 'Requesting microphone permission...';
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false
+                    } 
+                });
+                
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                microphone = audioContext.createMediaStreamSource(stream);
+                
+                analyser.fftSize = 4096;
+                analyser.smoothingTimeConstant = 0.3;
+                
+                const bufferLength = analyser.frequencyBinCount;
+                dataArray = new Uint8Array(bufferLength);
+                
+                microphone.connect(analyser);
+                
+                isListening = true;
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                document.getElementById('status').textContent = 'Listening... Start singing!';
+                
+                detectPitch();
+                
+            } catch (err) {
+                console.error('Error accessing microphone:', err);
+                let errorMsg = 'Error: ';
+                
+                if (err.name === 'NotAllowedError') {
+                    errorMsg += 'Microphone permission denied. Please click the microphone icon in your address bar and allow access.';
+                } else if (err.name === 'NotFoundError') {
+                    errorMsg += 'No microphone found. Please connect a microphone and try again.';
+                } else if (err.name === 'NotSupportedError') {
+                    errorMsg += 'Browser does not support microphone access. Try Chrome or Firefox.';
+                } else {
+                    errorMsg += 'Could not access microphone. ' + err.message;
+                }
+                
+                document.getElementById('status').innerHTML = errorMsg + '<br><br>🔧 <strong>Troubleshooting:</strong><br>• Look for 🎤 icon in address bar and click "Allow"<br>• Try refreshing the page<br>• Use Chrome/Firefox for best support';
+            }
+        }
+
+        function stopDetection() {
+            isListening = false;
+            
+            if (microphone) {
+                microphone.disconnect();
+            }
+            if (audioContext) {
+                audioContext.close();
+            }
+            
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('status').textContent = 'Detection stopped';
+            document.getElementById('currentNote').textContent = 'Start singing!';
+            document.getElementById('frequencyDisplay').textContent = 'Frequency: -- Hz';
+            
+            // Remove active class from all notes
+            document.querySelectorAll('.note').forEach(note => {
+                note.classList.remove('active');
+            });
+        }
+
+        function detectPitch() {
+            if (!isListening) return;
+            
+            analyser.getByteFrequencyData(dataArray);
+            
+            const frequency = findFundamentalFrequency();
+            
+            if (frequency > 80 && frequency < 2000) {
+                const detectedNote = findClosestNote(frequency);
+                displayNote(detectedNote, frequency);
+            }
+            
+            requestAnimationFrame(detectPitch);
+        }
+
+        function findFundamentalFrequency() {
+            const nyquist = audioContext.sampleRate / 2;
+            const resolution = nyquist / dataArray.length;
+            
+            let maxIndex = 0;
+            let maxValue = 0;
+            
+            // Look for the peak in the frequency domain
+            for (let i = 10; i < dataArray.length / 2; i++) {
+                if (dataArray[i] > maxValue) {
+                    maxValue = dataArray[i];
+                    maxIndex = i;
+                }
+            }
+            
+            // Only return frequency if amplitude is significant
+            if (maxValue > 50) {
+                return maxIndex * resolution;
+            }
+            
+            return 0;
+        }
+
+        function findClosestNote(frequency) {
+            let closestNote = 'S';
+            let minDifference = Infinity;
+            
+            for (const [note, ratio] of Object.entries(noteRatios)) {
+                const targetFreq = baseFrequency * ratio;
+                
+                // Check multiple octaves
+                for (let octave = 0; octave < 4; octave++) {
+                    const octaveFreq = targetFreq * Math.pow(2, octave);
+                    const difference = Math.abs(frequency - octaveFreq);
+                    
+                    if (difference < minDifference) {
+                        minDifference = difference;
+                        closestNote = note;
+                    }
+                }
+            }
+            
+            return closestNote;
+        }
+
+        function displayNote(note, frequency) {
+            document.getElementById('currentNote').textContent = note;
+            document.getElementById('frequencyDisplay').textContent = `Frequency: ${frequency.toFixed(1)} Hz`;
+            
+            // Remove active class from all notes
+            document.querySelectorAll('.note').forEach(noteEl => {
+                noteEl.classList.remove('active');
+            });
+            
+            // Add active class to detected note
+            const activeNote = document.querySelector(`[data-note="${note}"]`);
+            if (activeNote) {
+                activeNote.classList.add('active');
+            }
+        }
+
+        // Handle page visibility to pause/resume detection
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && isListening) {
+                stopDetection();
+            }
+        });
+    </script>
+</body>
+</html>
