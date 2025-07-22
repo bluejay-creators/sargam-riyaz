@@ -9,6 +9,13 @@ const baseFrequency: number = 130.81;
 
 // Frequency ratios for Hindustani notes (just intonation)
 const noteRatios: Record<string, number> = {
+    'S̱': 0.5,      // Lower Sa
+    'ṟ': 0.5 * 9/8, // Lower Re
+    'g̱': 0.5 * 5/4, // Lower Ga
+    'm̱': 0.5 * 4/3, // Lower Ma
+    'p̱': 0.5 * 3/2, // Lower Pa
+    'ḏ': 0.5 * 5/3, // Lower Dha
+    'ṉ': 0.5 * 15/8, // Lower Ni
     'S': 1.0,      // Sa (shudh)
     'r': 9/8,      // Re (shudh)
     'g': 5/4,      // Ga (shudh)
@@ -138,14 +145,22 @@ function findClosestNote(frequency: number): string {
     
     for (const [note, ratio] of Object.entries(noteRatios)) {
         const targetFreq: number = baseFrequency * ratio;
-        
-        for (let octave = 0; octave < 4; octave++) {
-            const octaveFreq: number = targetFreq * Math.pow(2, octave);
-            const difference: number = Math.abs(frequency - octaveFreq);
-            
+        // Lower octave notes: only check octave 0
+        if (note.endsWith('̱')) {
+            const difference: number = Math.abs(frequency - targetFreq);
             if (difference < minDifference) {
                 minDifference = difference;
                 closestNote = note;
+            }
+        } else {
+            // Regular notes: check octaves 0–3
+            for (let octave = 0; octave < 4; octave++) {
+                const octaveFreq: number = targetFreq * Math.pow(2, octave);
+                const difference: number = Math.abs(frequency - octaveFreq);
+                if (difference < minDifference) {
+                    minDifference = difference;
+                    closestNote = note;
+                }
             }
         }
     }
