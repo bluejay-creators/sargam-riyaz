@@ -12,6 +12,24 @@ function toggleSettings(): void {
     }
 }
 
+function toggleVisibility(elementId: string, show: boolean): void {
+    const element = document.getElementById(elementId);
+    if (element) {
+        if (show) {
+            element.classList.remove('hidden');
+        } else {
+            element.classList.add('hidden');
+        }
+    }
+    // If it's the graph, also hide its container
+    if (elementId === 'frequencyGraph') {
+        const container = element?.parentElement;
+        if (container) {
+            container.style.display = show ? 'block' : 'none';
+        }
+    }
+}
+
 // Note to frequency mapping (A4 = 440 Hz)
 const noteToFreq: Record<string, number> = {
     'C3': 130.81,
@@ -277,7 +295,10 @@ function updateFrequencyHistory(frequency: number): void {
 }
 
 function displayNote(note: string, frequency: number): void {
-    (document.getElementById('currentNote') as HTMLElement).textContent = note;
+    const currentNoteElement = document.getElementById('currentNote');
+    if (currentNoteElement && !currentNoteElement.classList.contains('hidden')) {
+        currentNoteElement.textContent = note;
+    }
     (document.getElementById('frequencyDisplay') as HTMLElement).textContent = '';
     
     document.querySelectorAll('.note').forEach(noteEl => {

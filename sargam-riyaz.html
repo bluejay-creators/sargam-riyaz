@@ -193,6 +193,26 @@
             background: #2d2d2d;
             color: white;
         }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -222,6 +242,18 @@
                 <label for="maxFreq">Max Detection Frequency (Hz)</label>
                 <input type="number" id="maxFreq" value="500" step="1" onchange="updateMaxFrequency(this.value)">
             </div>
+            <div class="settings-group">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="showCurrentNote" onchange="toggleVisibility('currentNote', this.checked)">
+                    <label for="showCurrentNote">Show Current Note</label>
+                </div>
+            </div>
+            <div class="settings-group">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="showGraph" checked onchange="toggleVisibility('frequencyGraph', this.checked)">
+                    <label for="showGraph">Show Frequency Graph</label>
+                </div>
+            </div>
         </div>
         <h1>🎵 Sargam Practice</h1>
         
@@ -236,7 +268,7 @@
             <div class="note" data-note="S'">S'</div>
         </div>
 
-        <div class="current-note" id="currentNote">Start singing!</div>
+        <div class="current-note hidden" id="currentNote">Start singing!</div>
         
         <div class="frequency-display" id="frequencyDisplay">
             Frequency: -- Hz
