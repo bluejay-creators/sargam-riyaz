@@ -12,6 +12,8 @@ let graphCtx: CanvasRenderingContext2D | null = null;
 
 // Reference frequency for Sa (C3 = 130.81 Hz, but adjustable)
 const baseFrequency: number = 130.81;
+// Maximum frequency to search for (in Hz)
+const maxSearchFreq = 500;
 
 // Frequency ratios for Hindustani notes (just intonation)
 const noteRatios: Record<string, number> = {
@@ -123,6 +125,7 @@ function detectNote(): void {
     } else {
         updateFrequencyHistory(0);
     }
+
     drawFrequencyGraph();
     requestAnimationFrame(detectNote);
 }
@@ -135,7 +138,8 @@ function findFundamentalFrequency(): number {
     let maxIndex = 0;
     let maxValue = 0;
     
-    for (let i = 10; i < dataArray.length / 2; i++) {
+    const maxBin = Math.floor(maxSearchFreq / resolution);
+    for (let i = 10; i < maxBin; i++) {
         if (dataArray[i] > maxValue) {
             maxValue = dataArray[i];
             maxIndex = i;
@@ -146,6 +150,48 @@ function findFundamentalFrequency(): number {
         return maxIndex * resolution;
     }
     
+    return 0;
+}
+
+function findFundamentalFrequencyHPS(): number {
+    if (!audioContext || !dataArray) return 0;
+    const nyquist = audioContext.sampleRate / 2;
+    const resolution = nyquist / dataArray.length;
+
+    // Convert Uint8Array to Float32Array for better precision
+    const spectrum = Float32Array.from(dataArray);
+
+    // Number of harmonics to use (2-5 is typical)
+    const harmonics = 4;
+    const hps = new Float32Array(spectrum.length);
+
+    // Copy original spectrum
+    for (let i = 0; i < spectrum.length; i++) {
+        hps[i] = spectrum[i];
+    }
+
+    // Multiply downsampled spectra
+    for (let h = 2; h <= harmonics; h++) {
+        for (let i = 0; i < spectrum.length / h; i++) {
+            hps[i] *= spectrum[Math.floor(i * h)];
+        }
+    }
+
+    // Search for peak in reasonable range (e.g., up to 500 Hz)
+    const maxSearchFreq = 500;
+    const maxBin = Math.floor(maxSearchFreq / resolution);
+    let maxIndex = 0;
+    let maxValue = 0;
+    for (let i = 10; i < maxBin; i++) {
+        if (hps[i] > maxValue) {
+            maxValue = hps[i];
+            maxIndex = i;
+        }
+    }
+
+    if (maxValue > 1) { // threshold may need tuning
+        return maxIndex * resolution;
+    }
     return 0;
 }
 
