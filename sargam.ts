@@ -4,6 +4,59 @@ let microphone: MediaStreamAudioSourceNode | null;
 let dataArray: Uint8Array;
 let isListening: boolean = false;
 
+// Settings variables and functions
+function toggleSettings(): void {
+    const popup = document.getElementById('settingsPopup');
+    if (popup) {
+        popup.classList.toggle('show');
+    }
+}
+
+// Note to frequency mapping (A4 = 440 Hz)
+const noteToFreq: Record<string, number> = {
+    'C3': 130.81,
+    'C#3': 138.59,
+    'D3': 146.83,
+    'D#3': 155.56,
+    'E3': 164.81,
+    'F3': 174.61,
+    'F#3': 185.00,
+    'G3': 196.00,
+    'G#3': 207.65,
+    'A3': 220.00,
+    'A#3': 233.08,
+    'B3': 246.94,
+    'C4': 261.63
+};
+
+function updateBasePitch(note: string): void {
+    const freq = noteToFreq[note];
+    if (freq) {
+        baseFrequency = freq;
+        const display = document.getElementById('frequencyDisplay');
+        if (display) {
+            display.textContent = `Sa set to ${note}`;
+        }
+    }
+}
+
+function updateMaxFrequency(value: string): void {
+    const freq = parseInt(value);
+    if (!isNaN(freq) && freq > 0) {
+        maxSearchFreq = freq;
+    }
+}
+
+// Close settings when clicking outside
+document.addEventListener('click', function(event: MouseEvent) {
+    const popup = document.getElementById('settingsPopup');
+    const settingsBtn = event.target as HTMLElement;
+    
+    if (popup && !popup.contains(event.target as Node) && !settingsBtn.classList.contains('settings-button')) {
+        popup.classList.remove('show');
+    }
+});
+
 // Frequency graph variables
 const frequencyHistory: number[] = [];
 const maxHistory: number = 240; // About 8 seconds at 30fps
@@ -11,9 +64,9 @@ let graphCanvas: HTMLCanvasElement | null = null;
 let graphCtx: CanvasRenderingContext2D | null = null;
 
 // Reference frequency for Sa (C3 = 130.81 Hz, but adjustable)
-const baseFrequency: number = 130.81;
+let baseFrequency: number = 130.81;
 // Maximum frequency to search for (in Hz)
-const maxSearchFreq = 500;
+let maxSearchFreq: number = 500;
 
 // Frequency ratios for Hindustani notes (just intonation)
 const noteRatios: Record<string, number> = {
@@ -225,7 +278,7 @@ function updateFrequencyHistory(frequency: number): void {
 
 function displayNote(note: string, frequency: number): void {
     (document.getElementById('currentNote') as HTMLElement).textContent = note;
-    (document.getElementById('frequencyDisplay') as HTMLElement).textContent = `Frequency: ${frequency.toFixed(1)} Hz`;
+    (document.getElementById('frequencyDisplay') as HTMLElement).textContent = '';
     
     document.querySelectorAll('.note').forEach(noteEl => {
         noteEl.classList.remove('active');

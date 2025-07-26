@@ -121,10 +121,108 @@
             border-radius: 10px;
             background: rgba(0, 0, 0, 0.2);
         }
+
+        /* Settings styles */
+        .settings-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        .settings-button:hover {
+            opacity: 1;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .settings-popup {
+            position: absolute;
+            top: 3.5rem;
+            right: 1rem;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 1rem;
+            min-width: 200px;
+            display: none;
+            z-index: 1000;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .settings-popup.show {
+            display: block;
+        }
+
+        .settings-popup h3 {
+            margin: 0 0 1rem 0;
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+
+        .settings-group {
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+
+        .settings-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .settings-group input,
+        .settings-group select {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            padding: 0.5rem;
+            color: white;
+        }
+
+        .settings-group select option {
+            background: #2d2d2d;
+            color: white;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <button class="settings-button" onclick="toggleSettings()">⚙️</button>
+        <div class="settings-popup" id="settingsPopup">
+            <h3>Settings</h3>
+            <div class="settings-group">
+                <label for="basePitch">Sa (Base Note)</label>
+                <select id="basePitch" onchange="updateBasePitch(this.value)" style="width: 100%; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 5px; padding: 0.5rem; color: white;">
+                    <option value="C3">C3</option>
+                    <option value="C#3">C#3</option>
+                    <option value="D3">D3</option>
+                    <option value="D#3">D#3</option>
+                    <option value="E3">E3</option>
+                    <option value="F3">F3</option>
+                    <option value="F#3">F#3</option>
+                    <option value="G3">G3</option>
+                    <option value="G#3">G#3</option>
+                    <option value="A3">A3</option>
+                    <option value="A#3">A#3</option>
+                    <option value="B3">B3</option>
+                    <option value="C4">C4</option>
+                </select>
+            </div>
+            <div class="settings-group">
+                <label for="maxFreq">Max Detection Frequency (Hz)</label>
+                <input type="number" id="maxFreq" value="500" step="1" onchange="updateMaxFrequency(this.value)">
+            </div>
+        </div>
         <h1>🎵 Sargam Practice</h1>
         
         <div class="sargam-display">
