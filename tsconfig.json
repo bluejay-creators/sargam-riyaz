@@ -1,12 +1,11 @@
 {
-  "compilerOptions": {
-    "target": "es2017",
-    "module": "es6",
-    "outDir": "./dist",
-    "rootDir": "./",
-    "strict": true,
-    "esModuleInterop": true,
-    "lib": ["es2017", "dom"]
-  },
-  "include": ["sargam.ts"]
+    "compilerOptions": {
+        "target": "es2017",
+        "lib": ["es2017", "dom"],
+        "outDir": "dist",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true
+    }
 }
