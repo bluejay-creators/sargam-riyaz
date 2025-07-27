@@ -45,23 +45,32 @@
         .sargam-display {
             display: flex;
             justify-content: center;
-            gap: 1rem;
+            gap: 0.75rem;
             margin: 2rem 0;
             flex-wrap: wrap;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .note {
-            width: 50px;
-            height: 50px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: bold;
             background: rgba(255, 255, 255, 0.2);
             border: 2px solid rgba(255, 255, 255, 0.3);
             transition: all 0.3s ease;
+            position: relative;
+        }
+
+        /* Use specialized font for better display of musical notation */
+        .note {
+            font-family: 'Arial Unicode MS', 'Segoe UI Symbol', 'Times New Roman', serif;
         }
 
         .note.active {
@@ -259,12 +268,17 @@
         
         <div class="sargam-display">
             <div class="note" data-note="S">S</div>
-            <div class="note" data-note="r">r</div>
-            <div class="note" data-note="g">g</div>
-            <div class="note" data-note="m">m</div>
-            <div class="note" data-note="p">p</div>
-            <div class="note" data-note="d">d</div>
-            <div class="note" data-note="n">n</div>
+            <div class="note" data-note="Ṟ">Ṟ</div>
+            <div class="note" data-note="R">R</div>
+            <div class="note" data-note="G̱">G̱</div>
+            <div class="note" data-note="G">G</div>
+            <div class="note" data-note="M">M</div>
+            <div class="note" data-note="M̄">M̄</div>
+            <div class="note" data-note="P">P</div>
+            <div class="note" data-note="Ḏ">Ḏ</div>
+            <div class="note" data-note="D">D</div>
+            <div class="note" data-note="Ṉ">Ṉ</div>
+            <div class="note" data-note="N">N</div>
             <div class="note" data-note="S'">S'</div>
         </div>
 

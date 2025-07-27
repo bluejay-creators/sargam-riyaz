@@ -88,14 +88,19 @@ let maxSearchFreq: number = 500;
 
 // Frequency ratios for Hindustani notes (just intonation)
 const noteRatios: Record<string, number> = {
-    'S': 1.0,      // Sa (shudh)
-    'r': 9/8,      // Re (shudh)
-    'g': 5/4,      // Ga (shudh)
-    'm': 4/3,      // Ma (shudh)
-    'p': 3/2,      // Pa (shudh)
-    'd': 5/3,      // Dha (shudh)
-    'n': 15/8,     // Ni (shudh)
-    "S'": 2.0      // High Sa (octave, shudh)
+    'S': 1.0,      // Sa
+    'Ṟ': 16/15,    // Re (komal)
+    'R': 9/8,      // Re (shuddh)
+    'G̱': 6/5,      // Ga (komal)
+    'G': 5/4,      // Ga (shuddh)
+    'M': 4/3,      // Ma (shuddh)
+    'M̄': 45/32,    // Ma (tivra)
+    'P': 3/2,      // Pa
+    'Ḏ': 8/5,      // Dha (komal)
+    'D': 5/3,      // Dha (shuddh)
+    'Ṉ': 9/5,      // Ni (komal)
+    'N': 15/8,     // Ni (shuddh)
+    "S'": 2.0      // High Sa
 };
 
 const noteNames: string[] = Object.keys(noteRatios);
@@ -125,8 +130,8 @@ async function startDetection(): Promise<void> {
         analyser = audioContext.createAnalyser();
         microphone = audioContext.createMediaStreamSource(stream);
         
-        analyser.fftSize = 4096;
-        analyser.smoothingTimeConstant = 0.3;
+        analyser.fftSize = 32768; // Increased for much better frequency resolution
+        analyser.smoothingTimeConstant = 0.8; // Increased for more stable readings
         
         const bufferLength: number = analyser.frequencyBinCount;
         dataArray = new Uint8Array(bufferLength);
@@ -270,6 +275,8 @@ function findClosestNote(frequency: number): string {
     let closestNote: string = 'S';
     let minDifference: number = Infinity;
     
+    console.log('Finding closest note for frequency:', frequency);
+    
     for (const [note, ratio] of Object.entries(noteRatios)) {
         const targetFreq: number = baseFrequency * ratio;
         
@@ -280,6 +287,7 @@ function findClosestNote(frequency: number): string {
             if (difference < minDifference) {
                 minDifference = difference;
                 closestNote = note;
+                console.log(`Found closer note: ${note} (diff: ${difference.toFixed(2)}Hz, target: ${octaveFreq.toFixed(2)}Hz)`);
             }
         }
     }
@@ -299,12 +307,30 @@ function displayNote(note: string, frequency: number): void {
     if (currentNoteElement && !currentNoteElement.classList.contains('hidden')) {
         currentNoteElement.textContent = note;
     }
-    (document.getElementById('frequencyDisplay') as HTMLElement).textContent = '';
     
+    // Show detailed frequency info for debugging
+    const freqDisplay = document.getElementById('frequencyDisplay') as HTMLElement;
+    if (freqDisplay) {
+        // Check if it's a komal or tivra note based on the Unicode character
+        const noteType = note.includes('Ṟ') || note.includes('G̱') || note.includes('Ḏ') || note.includes('Ṉ') ? 'komal' :
+                        note.includes('M̄') ? 'tivra' : 'shuddh';
+        
+        // Calculate the exact frequency for this note
+        let exactFreq = 0;
+        if (noteRatios[note]) {
+            exactFreq = baseFrequency * noteRatios[note];
+        }
+        
+        // Display detailed info
+        freqDisplay.textContent = `${frequency.toFixed(2)} Hz (${noteType}) - Target: ${exactFreq.toFixed(2)} Hz`;
+    }
+    
+    // Remove active class from all notes
     document.querySelectorAll('.note').forEach(noteEl => {
         noteEl.classList.remove('active');
     });
     
+    // Find and highlight the active note
     const activeNote = document.querySelector(`[data-note="${note}"]`);
     if (activeNote) {
         activeNote.classList.add('active');
