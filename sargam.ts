@@ -21,13 +21,6 @@ function toggleVisibility(elementId: string, show: boolean): void {
             element.classList.add('hidden');
         }
     }
-    // If it's the graph, also hide its container
-    if (elementId === 'frequencyGraph') {
-        const container = element?.parentElement;
-        if (container) {
-            container.style.display = show ? 'block' : 'none';
-        }
-    }
 }
 
 // Note to frequency mapping (A4 = 440 Hz)

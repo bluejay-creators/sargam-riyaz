@@ -259,8 +259,8 @@
             </div>
             <div class="settings-group">
                 <div class="checkbox-group">
-                    <input type="checkbox" id="showGraph" checked onchange="toggleVisibility('frequencyGraph', this.checked)">
-                    <label for="showGraph">Show Frequency Graph</label>
+                    <input type="checkbox" id="showGraph" onchange="toggleVisibility('frequencyGraph', this.checked)">
+                    <label for="showGraph">Show Frequency Graph <span style="font-size: 0.8em; opacity: 0.7;">(beta)</span></label>
                 </div>
             </div>
         </div>
@@ -296,7 +296,7 @@
             Click "Start Detection" to begin practicing
         </div>
 
-        <canvas id="frequencyGraph" width="480" height="120" style="margin-top:2rem; width:100%; max-width:480px; background:rgba(0,0,0,0.1); border-radius:10px;"></canvas>
+        <canvas id="frequencyGraph" class="hidden" width="480" height="120" style="margin-top:2rem; width:100%; max-width:480px; background:rgba(0,0,0,0.1); border-radius:10px;"></canvas>
     </div>
     <script src="dist/sargam.js"></script>
 </body>
